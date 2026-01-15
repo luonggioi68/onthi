@@ -69,62 +69,19 @@
             color: #666;
             font-size: 14px;
         }
-    .copyrig {
-      color: blue;
-      font-family:Time new roman;
-      text-align: center;
-    }
-    .linthi {
-      color: blue;
-      font-family:Time new roman;
-      font-size:16px;
-      text-align: center;
-    }
+
     </style>
 </head>
 <body>
-    <div class="copyrig">
-      <h3 >THI ONLINE MÔN TIN HỌC<br> Trường PT DTNT THCS&THPT Tuy Đức</h3>   
-    </div>
-    <div id="start-screen">
-        <button class="btn-start" onclick="goFullScreen()">BẮT ĐẦU THI</button>
-        <p class="note">Nhấn nút để xem toàn màn hình</p>
-        <h6 class="linthi" >QUÉT MÃ QR ĐỂ THI TRÊN ĐIỆN THOẠI</h6>
-    <img src="THI.png" 
-         alt="qr thi online tin học" 
-         width="200px" 
-         height="200px">
-        <p class="linthi" > <b>Link thi 1: luonggioi68.github.io/thitin</b><br>
-       <b>Link thi 2: thitin.vercel.app </b></p>
-        <Hr>
-          <h5 class="copyrig"  >2026 - Copyright by Lương Văn Giỏi - 0383477162</h5>
+
         
     </div>
 
     <div class="iframe-container" id="main-content">
-        <iframe src="https://script.google.com/macros/s/AKfycbzZzl-UzZJ6ivIV6rOeFiF_9pObXHWee2-_vpyyMoU4nh1hkdlBltbbank4TLkQDKk/exec" allow="autoplay; fullscreen"></iframe>
+        <iframe src="https://script.google.com/macros/s/AKfycbxUvQSGyYNZtiZctrW3jgWU6djE_ny_xwBLbtSNOeZ1wfcJT2EktIQvvj1SrDzu5X8/exec?a=onthi" allow="autoplay; "></iframe>
     </div>
 
-    <script>
-        function goFullScreen() {
-            var elem = document.documentElement;
-            var startScreen = document.getElementById("start-screen");
-            var mainContent = document.getElementById("main-content");
-
-            // 1. Yêu cầu trình duyệt mở Full màn hình
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) { /* Safari */
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { /* IE11 */
-                elem.msRequestFullscreen();
-            }
-
-            // 2. Ẩn nút bắt đầu, hiện nội dung web
-            startScreen.style.display = "none";
-            mainContent.style.display = "block";
-        }
-    </script>
+    
 
 </body>
 </html>
