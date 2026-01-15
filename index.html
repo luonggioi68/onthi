@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thi Online Tin học</title>
+    <title>Ôn thi Tin học Online</title>
     <style>
         body, html {
             margin: 0;
@@ -22,7 +22,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            display: none; /* Ẩn đi lúc đầu, chờ bấm nút */
+      
         }
 
         iframe {
@@ -31,57 +31,25 @@
             border: none;
             /* Đẩy lên để che thanh thông báo Google */
             position: relative;
-            top: -40px; 
+            top: -25px; 
             height: calc(100vh + 40px); 
         }
 
-        /* CSS cho nút Bắt đầu (Overlay) */
-        #start-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            z-index: 999;
-            background: white;
-        }
-
-        .btn-start {
-            padding: 15px 30px;
-            font-size: 20px;
-            background-color: #007bff; /* Màu xanh */
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
-        }
-
-        .btn-start:active {
-            transform: scale(0.95);
-        }
-        
-        .note {
-            margin-top: 15px;
-            color: #666;
-            font-size: 14px;
-        }
+     
+    .copyrig {
+      color: blue;
+      font-family:Time new roman;
+      text-align: center;
+    }
 
     </style>
 </head>
 <body>
-
-        
-    </div>
-
-    <div class="iframe-container" id="main-content">
-        <iframe src="https://script.google.com/macros/s/AKfycbxUvQSGyYNZtiZctrW3jgWU6djE_ny_xwBLbtSNOeZ1wfcJT2EktIQvvj1SrDzu5X8/exec?a=onthi" allow="autoplay; "></iframe>
-    </div>
-
-    
-
-</body>
+      <div class="iframe" id="main-content">
+        <iframe src="https://script.google.com/macros/s/AKfycbxUvQSGyYNZtiZctrW3jgWU6djE_ny_xwBLbtSNOeZ1wfcJT2EktIQvvj1SrDzu5X8/exec?a=onthi" allow="autoplay"></iframe>
+  
+      </div>
+           <Hr>
+          
+ </body>
 </html>
