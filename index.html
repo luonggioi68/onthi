@@ -3,59 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đang vào phòng thi...</title>
+    <title>Ôn Thi Tin học Online</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        body, html {
             margin: 0;
-            background-color: #f0f2f5;
-            text-align: center;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            font-family: sans-serif;
         }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px auto;
+        
+        /* CSS cho khung chứa Iframe */
+        .iframe-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+      
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        p { color: #555; font-size: 16px; }
+
+        iframe {
+            width: 100%;
+            height: 100vh;
+            border: none;
+            /* Đẩy lên để che thanh thông báo Google */
+            position: relative;
+            top: -10px; 
+            height: calc(100vh + 40px); 
+        }
+
+     
+    .copyrig {
+      color: blue;
+      font-family:Time new roman;
+      text-align: center;
+    }
+
     </style>
 </head>
 <body>
-    <div>
-        <div class="loader"></div>
-        <p>Hệ thống đang chuyển đến phòng thi...</p>
-        <p style="font-size: 12px; color: #999">Nếu không tự chuyển, vui lòng bấm vào dấu "..." và chọn "Mở bằng trình duyệt".</p>
-    </div>
-
-    <script>
-        // --- CẤU HÌNH: DÁN LINK DEPLOY GOOGLE SCRIPT CỦA THẦY VÀO ĐÂY ---
-        // (Link dài dạng https://script.google.com/macros/s/..../exec)
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUvQSGyYNZtiZctrW3jgWU6djE_ny_xwBLbtSNOeZ1wfcJT2EktIQvvj1SrDzu5X8/exec?a=onthi";
-
-        // Logic xử lý chuyển hướng
-        function redirect() {
-            // Lấy tham số hiện tại (nếu thầy muốn truyền tham số ?a=admin...)
-            var params = window.location.search;
-            
-            // Xóa bỏ tham số fbclid của Facebook nếu có (để tránh lỗi)
-            if (params.includes("fbclid=")) {
-                params = ""; // Hoặc xử lý lọc chuỗi nếu cần giữ tham số khác
-            }
-
-            // Thực hiện chuyển hướng
-            window.location.href = GOOGLE_SCRIPT_URL + params;
-        }
-
-        // Chạy ngay khi tải trang
-        redirect();
-    </script>
-</body>
+      <div class="iframe" id="main-content">
+        <iframe src="https://script.google.com/macros/s/AKfycbxUvQSGyYNZtiZctrW3jgWU6djE_ny_xwBLbtSNOeZ1wfcJT2EktIQvvj1SrDzu5X8/exec?a=onthi" allow="autoplay"></iframe>
+      </div>
+           <Hr>
+          
+ </body>
 </html>
