@@ -1,1 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI OCR Solver - Chụp Ảnh Giải Bài Tập</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --dark: #2C3E50;
+            --light: #F8F9FA;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Camera Container */
+        #camera-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Khung quét (Overlay) */
+        .scan-overlay {
+            position: absolute;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            height: 40%;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        /* Controls Area */
+        .controls {
+            padding: 20px;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            color: var(--dark);
+            text-align: center;
+        }
+
+        .btn-capture {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 5px solid #ddd;
+            background: var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-capture:active { transform: scale(0.9); }
+
+        #result-area {
+            display: none;
+            padding: 15px;
+            background: #fff;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .loading { display: none; color: var(--primary); font-weight: bold; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <div id="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <div class="scan-overlay">
+            <div class="scan-line"></div>
+        </div>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <div class="controls">
+        <div id="status">Căn chỉnh bài tập vào khung và nhấn chụp</div>
+        <div class="loading" id="loader">Đang phân tích chữ viết...</div>
+        
+        <div id="result-area">
+            <strong>Nội dung nhận diện:</strong>
+            <p id="ocr-text"></p>
+            <hr>
+            <strong style="color: green;">Lời giải từ AI:</strong>
+            <p id="ai-solution">Đang kết nối AI...</p>
+        </div>
+
+        <button class="btn-capture" onclick="captureImage()"></button>
+        <p style="font-size: 12px; color: #666;">Nhấn nút để nhận diện</p>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const loader = document.getElementById('loader');
+        const resultArea = document.getElementById('result-area');
+        const ocrText = document.getElementById('ocr-text');
+        const aiSolution = document.getElementById('ai-solution');
+
+        // 1. Khởi tạo Camera
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Không thể truy cập Camera: " + err);
+            }
+        }
+
+        // 2. Chụp ảnh và Xử lý OCR
+        async function captureImage() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Hiển thị trạng thái chờ
+            loader.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            // Sử dụng Tesseract.js để đọc ảnh
+            try {
+                const result = await Tesseract.recognize(
+                    canvas.toDataURL('image/jpeg'),
+                    'vie+eng', // Ngôn ngữ Tiếng Việt và Tiếng Anh
+                    { logger: m => console.log(m) }
+                );
+
+                displayResults(result.data.text);
+            } catch (error) {
+                alert("Lỗi OCR: " + error);
+                loader.style.display = 'none';
+            }
+        }
+
+        // 3. Hiển thị kết quả và giả lập AI đưa ra lời giải
+        function displayResults(text) {
+            loader.style.display = 'none';
+            resultArea.style.display = 'block';
+            ocrText.innerText = text || "Không tìm thấy chữ";
+
+            // Giả lập gọi API AI (GPT-4/Gemini)
+            aiSolution.innerText = "Hệ thống đang phân tích bài toán: '" + text.substring(0, 50) + "...'. Lời giải: Để giải bài này, bạn cần áp dụng công thức...";
+        }
+
+        initCamera();
+    </script>
+</body>
+</html>
