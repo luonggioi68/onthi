@@ -175,14 +175,30 @@
         }
 
         // 3. Hiển thị kết quả và giả lập AI đưa ra lời giải
-        function displayResults(text) {
-            loader.style.display = 'none';
-            resultArea.style.display = 'block';
-            ocrText.innerText = text || "Không tìm thấy chữ";
+        async function displayResults(text) {
+    loader.style.display = 'block';
+    aiSolution.innerHTML = "<em>TITI đang suy nghĩ...</em>";
 
-            // Giả lập gọi API AI (GPT-4/Gemini)
-            aiSolution.innerText = "Hệ thống đang phân tích bài toán: '" + text.substring(0, 50) + "...'. Lời giải: Để giải bài này, bạn cần áp dụng công thức...";
+    try {
+        const response = await fetch('/api/solve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text }) // Gửi nội dung bài tập
+        });
+
+        const data = await response.json();
+        
+        if (data.solution) {
+            aiSolution.innerHTML = data.solution.replace(/\n/g, '<br>');
+        } else {
+            aiSolution.innerText = "Không nhận được lời giải.";
         }
+    } catch (error) {
+        aiSolution.innerText = "Lỗi hệ thống trung gian.";
+    } finally {
+        loader.style.display = 'none';
+    }
+}
 
         initCamera();
     </script>
