@@ -138,15 +138,26 @@
 
         // 1. Khởi tạo Camera
         async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                alert("Không thể truy cập Camera: " + err);
-            }
+    const constraints = {
+        video: {
+            facingMode: { ideal: "environment" }, // Ưu tiên camera sau
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
         }
+    };
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        // Đảm bảo video thực sự phát sau khi stream được nạp
+        video.onloadedmetadata = () => {
+            video.play();
+        };
+    } catch (err) {
+        console.error("Lỗi camera:", err);
+        alert("Không thể mở camera. Vui lòng kiểm tra quyền truy cập trong cài đặt trình duyệt.");
+    }
+}
 
         // 2. Chụp ảnh và Xử lý OCR
         async function captureImage() {
