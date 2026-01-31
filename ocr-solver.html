@@ -3,44 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITI AI Vision - Công thức Toán học chuẩn</title>
+    <title>TITI AI Vision - Đa Năng</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
     <script>
         window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-            }
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], processEscapes: true },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <style>
-        :root { --primary: #4A90E2; }
+        :root { --primary: #4A90E2; --secondary: #9b59b6; }
         body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
-        #camera-section, #crop-section { width: 100%; height: 80vh; position: relative; }
+        #camera-section, #crop-section { width: 100%; height: 75vh; position: relative; }
         video, #image-to-crop { width: 100%; height: 100%; object-fit: cover; }
+        
         .controls {
-            position: fixed; bottom: 0; width: 100%; height: 20vh; background: #fff;
-            border-radius: 20px 20px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: fixed; bottom: 0; width: 100%; height: 25vh; background: #fff;
+            border-radius: 20px 20px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
         }
-        .btn-snap { width: 70px; height: 70px; border-radius: 50%; border: 5px solid #eee; background: var(--primary); }
+
+        .action-group { display: flex; gap: 20px; align-items: center; }
+        .btn-snap { width: 70px; height: 70px; border-radius: 50%; border: 5px solid #eee; background: var(--primary); cursor: pointer; }
+        .btn-upload { background: var(--secondary); color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; }
+        
         #result-area {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff;
-            display: none; z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box;
+            display: none; z-index: 2000; overflow-y: auto; padding: 25px; box-sizing: border-box;
         }
-        /* CSS cho nội dung bài giải */
-        #ai-solution { line-height: 1.8; font-size: 16px; }
-        #ai-solution h2, #ai-solution h3 { color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        #ai-solution { line-height: 1.8; font-size: 16px; color: #2c3e50; }
         .loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: #fff; z-index: 3000; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
@@ -49,8 +44,12 @@
 <div id="camera-section">
     <video id="video" autoplay playsinline muted></video>
     <div class="controls">
-        <button class="btn-snap" id="snapBtn"></button>
-        <p style="color:#666; margin-top:5px; font-size:12px;">Chụp ảnh bài tập</p>
+        <div class="action-group">
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">📁 Tải ảnh</button>
+            <button class="btn-snap" id="snapBtn"></button>
+            <input type="file" id="fileInput" hidden accept="image/*">
+        </div>
+        <p style="color:#666; margin-top:10px; font-size:12px;">Nhấn nút chụp, tải ảnh hoặc nhấn Ctrl+V để dán ảnh</p>
     </div>
 </div>
 
@@ -58,14 +57,14 @@
     <img id="image-to-crop">
     <div class="controls">
         <div style="display:flex; gap:15px;">
-            <button onclick="location.reload()" style="padding:10px 20px; border-radius:8px;">Chụp lại</button>
-            <button id="confirmBtn" style="padding:10px 20px; border-radius:8px; background:#2ecc71; color:#fff; border:none; font-weight:bold;">Giải bài</button>
+            <button onclick="location.reload()" style="padding:10px 20px; border-radius:8px;">Hủy</button>
+            <button id="confirmBtn" style="padding:10px 20px; border-radius:8px; background:#2ecc71; color:#fff; border:none; font-weight:bold;">Xác nhận giải bài</button>
         </div>
     </div>
 </div>
 
 <div id="result-area">
-    <button onclick="location.reload()" style="float:right; padding:8px; border-radius:5px;">Đóng X</button>
+    <button onclick="location.reload()" style="float:right; padding:8px 15px; background:#f1f1f1; border:none; border-radius:8px;">Đóng X</button>
     <div id="ai-solution"></div>
 </div>
 
@@ -79,31 +78,55 @@
     const cropSection = document.getElementById('crop-section');
     let cropper;
 
+    // Khởi động Camera
     async function startCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             video.srcObject = stream;
-        } catch (e) { alert("Lỗi camera!"); }
+        } catch (e) { console.log("Camera không khả dụng"); }
     }
 
-    document.getElementById('snapBtn').onclick = () => {
-        const canvas = document.getElementById('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        imageToCrop.src = canvas.toDataURL('image/jpeg');
+    // Xử lý nạp ảnh vào Cropper
+    function loadToCropper(source) {
+        imageToCrop.src = source;
         cameraSection.style.display = 'none';
         cropSection.style.display = 'block';
-        cropper = new Cropper(imageToCrop, { viewMode: 1 });
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(imageToCrop, { viewMode: 1, autoCropArea: 0.8 });
+    }
+
+    // 1. Chụp ảnh
+    document.getElementById('snapBtn').onclick = () => {
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        loadToCropper(canvas.toDataURL('image/jpeg'));
     };
 
-    document.getElementById('confirmBtn').onclick = async () => {
-        const croppedCanvas = cropper.getCroppedCanvas({ maxWidth: 1024 });
-        const base64Image = croppedCanvas.toDataURL('image/jpeg', 0.8);
-        document.getElementById('loader').style.display = 'flex';
+    // 2. Upload ảnh
+    document.getElementById('fileInput').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => loadToCropper(event.target.result);
+        reader.readAsDataURL(e.target.files[0]);
+    };
 
+    // 3. Dán ảnh (Ctrl+V) - Tuyệt vời cho PC
+    document.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const blob = items[i].getAsFile();
+                const reader = new FileReader();
+                reader.onload = (event) => loadToCropper(event.target.result);
+                reader.readAsDataURL(blob);
+            }
+        }
+    });
+
+    // Gửi cho AI
+    document.getElementById('confirmBtn').onclick = async () => {
+        const base64Image = cropper.getCroppedCanvas({ maxWidth: 1024 }).toDataURL('image/jpeg', 0.8);
+        document.getElementById('loader').style.display = 'flex';
         try {
             const res = await fetch('/api/solve', {
                 method: 'POST',
@@ -111,19 +134,11 @@
                 body: JSON.stringify({ image: base64Image })
             });
             const data = await res.json();
-            
             const solDiv = document.getElementById('ai-solution');
-            
-            // Bước quan trọng: Render Markdown trước
-            solDiv.innerHTML = marked.parse(data.solution); 
-            
+            solDiv.innerHTML = marked.parse(data.solution);
             document.getElementById('result-area').style.display = 'block';
-            
-            // Bước quan trọng nhất: Ép MathJax quét lại nội dung vừa Render
-            if (window.MathJax) {
-                MathJax.typesetPromise([solDiv]).catch((err) => console.log(err));
-            }
-        } catch (e) { alert("Lỗi kết nối AI!"); }
+            if (window.MathJax) MathJax.typesetPromise([solDiv]);
+        } catch (e) { alert("Lỗi kết nối!"); }
         finally { document.getElementById('loader').style.display = 'none'; }
     };
 
