@@ -192,6 +192,7 @@
         // 3. Hiển thị kết quả và giả lập AI đưa ra lời giải
         async function displayResults(text) {
     loader.style.display = 'block';
+            resultArea.scrollIntoView({ behavior: 'smooth' });
     aiSolution.innerHTML = "<em>TITI đang suy nghĩ...</em>";
 
     try {
