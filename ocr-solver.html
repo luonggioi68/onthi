@@ -3,141 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI OCR Solver</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <title>TITI AI Vision - Giải Bài Tập</title>
     <style>
-        body { margin: 0; font-family: sans-serif; background: #000; overflow: hidden; height: 100vh; }
-        #camera-container { position: relative; width: 100%; height: 70vh; background: #000; }
+        body { margin: 0; background: #000; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        #camera-container { position: relative; width: 100%; height: 75vh; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Khung quét */
         .scan-overlay {
-            position: absolute; top: 20%; left: 10%; width: 80%; height: 40%;
-            border: 2px solid #4A90E2; border-radius: 8px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); pointer-events: none;
+            position: absolute; top: 15%; left: 5%; width: 90%; height: 50%;
+            border: 2px solid #00ff00; border-radius: 15px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); pointer-events: none;
         }
-        .scan-line {
-            position: absolute; width: 100%; height: 2px; background: #4A90E2;
-            box-shadow: 0 0 15px #4A90E2; animation: scan 2s linear infinite;
-        }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-
-        /* Vùng điều khiển - Cố định ở đáy */
         .controls {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 30vh;
-            background: #fff; border-radius: 20px 20px 0 0;
-            display: flex; flex-direction: column; align-items: center; padding-top: 15px;
-            z-index: 1000;
+            position: fixed; bottom: 0; width: 100%; height: 25vh;
+            background: #fff; border-radius: 25px 25px 0 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .status-text { font-size: 14px; color: #666; margin-bottom: 10px; }
-        
-        /* Nút chụp cực nhạy */
         .btn-capture {
-            width: 70px; height: 70px; border-radius: 50%; border: 5px solid #ddd;
-            background: #4A90E2; cursor: pointer; outline: none;
-            -webkit-tap-highlight-color: transparent;
+            width: 80px; height: 80px; border-radius: 50%; border: 6px solid #e0e0e0;
+            background: #4A90E2; cursor: pointer; transition: 0.2s;
         }
-        .btn-capture:active { transform: scale(0.9); background: #357ABD; }
-
-        /* Vùng kết quả */
+        .btn-capture:active { transform: scale(0.9); }
         #result-area {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: #fff; padding: 20px; display: none; overflow-y: auto;
-            border-radius: 20px 20px 0 0; z-index: 1001;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; display: none; z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box;
         }
-        .close-btn { float: right; padding: 5px 10px; background: #eee; border-radius: 5px; cursor: pointer; }
-        .loading { display: none; color: #4A90E2; font-weight: bold; margin-top: 10px; }
+        .loading-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: #fff; z-index: 3000;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="camera-container">
-        <video id="video" autoplay playsinline></video>
-        <div class="scan-overlay"><div class="scan-line"></div></div>
-    </div>
+<div id="camera-container">
+    <video id="video" autoplay playsinline></video>
+    <div class="scan-overlay"></div>
+</div>
 
-    <canvas id="canvas" style="display:none;"></canvas>
+<div class="controls">
+    <p style="color: #666; font-size: 14px;">Chụp ảnh bài tập để TITI giải giúp bạn</p>
+    <button class="btn-capture" onclick="captureAndSolve()"></button>
+</div>
 
-    <div class="controls">
-        <div class="status-text" id="msg">Căn chỉnh bài tập và nhấn nút xanh</div>
-        <div class="loading" id="loader">Đang giải bài...</div>
-        <button class="btn-capture" id="capture-btn"></button>
-    </div>
+<div class="loading-overlay" id="loader">
+    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+    <p>TITI đang giải bài...</p>
+</div>
 
-    <div id="result-area">
-        <span class="close-btn" onclick="closeResult()">Đóng X</span>
-        <h3>Kết quả nhận diện:</h3>
-        <p id="ocr-text" style="background: #f9f9f9; padding: 10px; border-left: 4px solid #4A90E2;"></p>
-        <h3 style="color: #2ecc71;">Lời giải của TITI AI:</h3>
-        <div id="ai-solution">Đang đợi AI trả lời...</div>
-    </div>
+<div id="result-area">
+    <button onclick="closeResult()" style="position: sticky; top: 0; float: right; padding: 10px; background: #eee; border: none; border-radius: 5px;">Đóng X</button>
+    <h2 style="color: #4A90E2;">Lời giải từ TITI AI:</h2>
+    <hr>
+    <div id="ai-solution" style="line-height: 1.6; font-size: 17px; padding-bottom: 50px;"></div>
+</div>
 
-    <script>
-        const video = document.getElementById('video');
-        const captureBtn = document.getElementById('capture-btn');
-        const resultArea = document.getElementById('result-area');
-        const loader = document.getElementById('loader');
+<canvas id="canvas" style="display:none;"></canvas>
 
-        // Mở Camera
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                alert("Lỗi camera: " + err);
-            }
+<script>
+    const video = document.getElementById('video');
+    const loader = document.getElementById('loader');
+    const resultArea = document.getElementById('result-area');
+    const solutionDiv = document.getElementById('ai-solution');
+
+    async function startCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+    }
+
+    async function captureAndSolve() {
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+        loader.style.display = 'flex';
+
+        try {
+            const res = await fetch('/api/solve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: base64Image })
+            });
+            const data = await res.json();
+            solutionDiv.innerHTML = data.solution.replace(/\n/g, '<br>');
+            resultArea.style.display = 'block';
+        } catch (e) {
+            alert("Lỗi kết nối. Hãy kiểm tra API Key!");
+        } finally {
+            loader.style.display = 'none';
         }
+    }
 
-        // Xử lý chụp
-        captureBtn.addEventListener('click', async () => {
-            const canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    function closeResult() { resultArea.style.display = 'none'; }
+    startCamera();
+</script>
 
-            loader.style.display = 'block';
-            captureBtn.style.display = 'none';
-
-            try {
-                // OCR bằng Tesseract
-                const result = await Tesseract.recognize(canvas.toDataURL('image/jpeg'), 'vie+eng');
-                const text = result.data.text;
-                
-                document.getElementById('ocr-text').innerText = text;
-                resultArea.style.display = 'block';
-                
-                // Gọi Serverless Function của bạn
-                callAI(text);
-            } catch (e) {
-                alert("Lỗi xử lý: " + e);
-            } finally {
-                loader.style.display = 'none';
-            }
-        });
-
-        async function callAI(text) {
-            try {
-                const res = await fetch('/api/solve', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ text: text })
-                });
-                const data = await res.json();
-                document.getElementById('ai-solution').innerHTML = data.solution.replace(/\n/g, '<br>');
-            } catch (err) {
-                document.getElementById('ai-solution').innerText = "Lỗi kết nối AI. Kiểm tra API Key trên Vercel!";
-            }
-        }
-
-        function closeResult() {
-            resultArea.style.display = 'none';
-            captureBtn.style.display = 'block';
-        }
-
-        startCamera();
-    </script>
+<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 </body>
 </html>
