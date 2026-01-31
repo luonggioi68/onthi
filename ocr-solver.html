@@ -2,221 +2,142 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI OCR Solver - Chụp Ảnh Giải Bài Tập</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI OCR Solver</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        :root {
-            --primary: #4A90E2;
-            --dark: #2C3E50;
-            --light: #F8F9FA;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: var(--dark);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Camera Container */
-        #camera-container {
-            position: relative;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Khung quét (Overlay) */
+        body { margin: 0; font-family: sans-serif; background: #000; overflow: hidden; height: 100vh; }
+        #camera-container { position: relative; width: 100%; height: 70vh; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Khung quét */
         .scan-overlay {
-            position: absolute;
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-            width: 80%;
-            height: 40%;
-            border-radius: 8px;
-            pointer-events: none;
+            position: absolute; top: 20%; left: 10%; width: 80%; height: 40%;
+            border: 2px solid #4A90E2; border-radius: 8px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); pointer-events: none;
         }
-
         .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: var(--primary);
-            box-shadow: 0 0 15px var(--primary);
-            animation: scan 2s linear infinite;
+            position: absolute; width: 100%; height: 2px; background: #4A90E2;
+            box-shadow: 0 0 15px #4A90E2; animation: scan 2s linear infinite;
         }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
+        /* Vùng điều khiển - Cố định ở đáy */
+        .controls {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 30vh;
+            background: #fff; border-radius: 20px 20px 0 0;
+            display: flex; flex-direction: column; align-items: center; padding-top: 15px;
+            z-index: 1000;
         }
+        .status-text { font-size: 14px; color: #666; margin-bottom: 10px; }
+        
+        /* Nút chụp cực nhạy */
+        .btn-capture {
+            width: 70px; height: 70px; border-radius: 50%; border: 5px solid #ddd;
+            background: #4A90E2; cursor: pointer; outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-capture:active { transform: scale(0.9); background: #357ABD; }
 
-/* Tìm và thay thế đoạn style cũ bằng đoạn này */
-.controls {
-    position: fixed; /* Cố định ở dưới cùng màn hình */
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 10px 20px 30px 20px;
-    background: rgba(255, 255, 255, 0.95); /* Trắng mờ sang trọng */
-    border-radius: 20px 20px 0 0;
-    color: #2C3E50;
-    text-align: center;
-    z-index: 999; /* Luôn nằm trên cùng */
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
-}
-
-.btn-capture {
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;
-    border: 4px solid #fff;
-    background: #4A90E2;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    margin-bottom: 5px;
-}
-
-#result-area {
-    display: none;
-    max-height: 40vh; /* Giới hạn chiều cao kết quả để không tràn màn hình */
-    overflow-y: auto;
-    text-align: left;
-    background: #f1f1f1;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    font-size: 14px;
-}
-
-        .loading { display: none; color: var(--primary); font-weight: bold; margin: 10px 0; }
+        /* Vùng kết quả */
+        #result-area {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: #fff; padding: 20px; display: none; overflow-y: auto;
+            border-radius: 20px 20px 0 0; z-index: 1001;
+        }
+        .close-btn { float: right; padding: 5px 10px; background: #eee; border-radius: 5px; cursor: pointer; }
+        .loading { display: none; color: #4A90E2; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="camera-container">
         <video id="video" autoplay playsinline></video>
-        <div class="scan-overlay">
-            <div class="scan-line"></div>
-        </div>
+        <div class="scan-overlay"><div class="scan-line"></div></div>
     </div>
 
     <canvas id="canvas" style="display:none;"></canvas>
 
     <div class="controls">
-        <div id="status">Căn chỉnh bài tập vào khung và nhấn chụp</div>
-        <div class="loading" id="loader">Đang phân tích chữ viết...</div>
-        
-        <div id="result-area">
-            <strong>Nội dung nhận diện:</strong>
-            <p id="ocr-text"></p>
-            <hr>
-            <strong style="color: green;">Lời giải từ AI:</strong>
-            <p id="ai-solution">Đang kết nối AI...</p>
-        </div>
+        <div class="status-text" id="msg">Căn chỉnh bài tập và nhấn nút xanh</div>
+        <div class="loading" id="loader">Đang giải bài...</div>
+        <button class="btn-capture" id="capture-btn"></button>
+    </div>
 
-        <button class="btn-capture" onclick="captureImage()"></button>
-        <p style="font-size: 12px; color: #666;">Nhấn nút để nhận diện</p>
+    <div id="result-area">
+        <span class="close-btn" onclick="closeResult()">Đóng X</span>
+        <h3>Kết quả nhận diện:</h3>
+        <p id="ocr-text" style="background: #f9f9f9; padding: 10px; border-left: 4px solid #4A90E2;"></p>
+        <h3 style="color: #2ecc71;">Lời giải của TITI AI:</h3>
+        <div id="ai-solution">Đang đợi AI trả lời...</div>
     </div>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const loader = document.getElementById('loader');
+        const captureBtn = document.getElementById('capture-btn');
         const resultArea = document.getElementById('result-area');
-        const ocrText = document.getElementById('ocr-text');
-        const aiSolution = document.getElementById('ai-solution');
+        const loader = document.getElementById('loader');
 
-        // 1. Khởi tạo Camera
-        async function initCamera() {
-    const constraints = {
-        video: {
-            facingMode: { ideal: "environment" }, // Ưu tiên camera sau
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+        // Mở Camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Lỗi camera: " + err);
+            }
         }
-    };
 
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
-        // Đảm bảo video thực sự phát sau khi stream được nạp
-        video.onloadedmetadata = () => {
-            video.play();
-        };
-    } catch (err) {
-        console.error("Lỗi camera:", err);
-        alert("Không thể mở camera. Vui lòng kiểm tra quyền truy cập trong cài đặt trình duyệt.");
-    }
-}
-
-        // 2. Chụp ảnh và Xử lý OCR
-        async function captureImage() {
+        // Xử lý chụp
+        captureBtn.addEventListener('click', async () => {
+            const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Hiển thị trạng thái chờ
             loader.style.display = 'block';
-            resultArea.style.display = 'none';
+            captureBtn.style.display = 'none';
 
-            // Sử dụng Tesseract.js để đọc ảnh
             try {
-                const result = await Tesseract.recognize(
-                    canvas.toDataURL('image/jpeg'),
-                    'vie+eng', // Ngôn ngữ Tiếng Việt và Tiếng Anh
-                    { logger: m => console.log(m) }
-                );
-
-                displayResults(result.data.text);
-            } catch (error) {
-                alert("Lỗi OCR: " + error);
+                // OCR bằng Tesseract
+                const result = await Tesseract.recognize(canvas.toDataURL('image/jpeg'), 'vie+eng');
+                const text = result.data.text;
+                
+                document.getElementById('ocr-text').innerText = text;
+                resultArea.style.display = 'block';
+                
+                // Gọi Serverless Function của bạn
+                callAI(text);
+            } catch (e) {
+                alert("Lỗi xử lý: " + e);
+            } finally {
                 loader.style.display = 'none';
+            }
+        });
+
+        async function callAI(text) {
+            try {
+                const res = await fetch('/api/solve', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ text: text })
+                });
+                const data = await res.json();
+                document.getElementById('ai-solution').innerHTML = data.solution.replace(/\n/g, '<br>');
+            } catch (err) {
+                document.getElementById('ai-solution').innerText = "Lỗi kết nối AI. Kiểm tra API Key trên Vercel!";
             }
         }
 
-        // 3. Hiển thị kết quả và giả lập AI đưa ra lời giải
-        async function displayResults(text) {
-    loader.style.display = 'block';
-            resultArea.scrollIntoView({ behavior: 'smooth' });
-    aiSolution.innerHTML = "<em>TITI đang suy nghĩ...</em>";
-
-    try {
-        const response = await fetch('/api/solve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text }) // Gửi nội dung bài tập
-        });
-
-        const data = await response.json();
-        
-        if (data.solution) {
-            aiSolution.innerHTML = data.solution.replace(/\n/g, '<br>');
-        } else {
-            aiSolution.innerText = "Không nhận được lời giải.";
+        function closeResult() {
+            resultArea.style.display = 'none';
+            captureBtn.style.display = 'block';
         }
-    } catch (error) {
-        aiSolution.innerText = "Lỗi hệ thống trung gian.";
-    } finally {
-        loader.style.display = 'none';
-    }
-}
 
-        initCamera();
+        startCamera();
     </script>
 </body>
 </html>
