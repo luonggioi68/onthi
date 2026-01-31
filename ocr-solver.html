@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TITI AI Vision - Giải Bài Tập</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+  };
+</script>
     <style>
         body { margin: 0; background: #000; font-family: sans-serif; height: 100vh; overflow: hidden; }
         #camera-container { position: relative; width: 100%; height: 75vh; }
@@ -88,6 +96,10 @@
             });
             const data = await res.json();
             solutionDiv.innerHTML = data.solution.replace(/\n/g, '<br>');
+    
+    // 2. Lệnh cho MathJax quét lại trang để hiển thị công thức đẹp
+    if (window.MathJax) {
+        MathJax.typesetPromise();
             resultArea.style.display = 'block';
         } catch (e) {
             alert("Lỗi kết nối. Hãy kiểm tra API Key!");
