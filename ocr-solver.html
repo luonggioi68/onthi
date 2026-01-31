@@ -64,39 +64,43 @@
             100% { top: 100%; }
         }
 
-        /* Controls Area */
-        .controls {
-            padding: 20px;
-            background: white;
-            border-radius: 20px 20px 0 0;
-            color: var(--dark);
-            text-align: center;
-        }
+/* Tìm và thay thế đoạn style cũ bằng đoạn này */
+.controls {
+    position: fixed; /* Cố định ở dưới cùng màn hình */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 20px 30px 20px;
+    background: rgba(255, 255, 255, 0.95); /* Trắng mờ sang trọng */
+    border-radius: 20px 20px 0 0;
+    color: #2C3E50;
+    text-align: center;
+    z-index: 999; /* Luôn nằm trên cùng */
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+}
 
-        .btn-capture {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 5px solid #ddd;
-            background: var(--primary);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
+.btn-capture {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    background: #4A90E2;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    margin-bottom: 5px;
+}
 
-        .btn-capture:active { transform: scale(0.9); }
-
-        #result-area {
-            display: none;
-            padding: 15px;
-            background: #fff;
-            color: #333;
-            max-height: 200px;
-            overflow-y: auto;
-            border-radius: 10px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-            text-align: left;
-        }
+#result-area {
+    display: none;
+    max-height: 40vh; /* Giới hạn chiều cao kết quả để không tràn màn hình */
+    overflow-y: auto;
+    text-align: left;
+    background: #f1f1f1;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
 
         .loading { display: none; color: var(--primary); font-weight: bold; margin: 10px 0; }
     </style>
