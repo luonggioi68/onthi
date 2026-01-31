@@ -3,38 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITI AI Vision</title>
+    <title>TITI AI - Cắt Ảnh & Giải Bài</title>
     
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>
-        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <style>
         body { margin: 0; background: #000; font-family: sans-serif; height: 100vh; overflow: hidden; }
-        #camera-container { position: relative; width: 100%; height: 75vh; background: #000; }
-        video { width: 100%; height: 100%; object-fit: cover; }
+        #camera-container, #cropper-container { position: relative; width: 100%; height: 80vh; background: #000; }
+        video, #image-to-crop { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Khung quét màu xanh lá */
-        .scan-overlay {
-            position: absolute; top: 15%; left: 5%; width: 90%; height: 50%;
-            border: 2px solid #00ff00; border-radius: 15px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); pointer-events: none;
-        }
-
         .controls {
-            position: fixed; bottom: 0; width: 100%; height: 25vh;
-            background: #fff; border-radius: 25px 25px 0 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1000;
+            position: fixed; bottom: 0; width: 100%; height: 20vh;
+            background: #fff; border-radius: 20px 20px 0 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
         }
 
-        .btn-capture {
-            width: 75px; height: 75px; border-radius: 50%; border: 5px solid #eee;
+        .btn-main {
+            width: 70px; height: 70px; border-radius: 50%; border: 5px solid #eee;
             background: #4A90E2; cursor: pointer;
         }
 
+        /* Vùng hiển thị kết quả */
         #result-area {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; display: none; z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box;
@@ -42,70 +33,89 @@
 
         .loader {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: #fff; z-index: 3000;
+            background: rgba(0,0,0,0.85); color: #fff; z-index: 3000;
             flex-direction: column; align-items: center; justify-content: center;
         }
     </style>
 </head>
 <body>
 
-<div id="camera-container">
-    <video id="video" autoplay playsinline muted></video>
-    <div class="scan-overlay"></div>
+<div id="camera-section">
+    <div id="camera-container">
+        <video id="video" autoplay playsinline muted></video>
+    </div>
+    <div class="controls">
+        <p style="color: #666; font-size: 13px;">Bấm để chụp ảnh bài tập</p>
+        <button class="btn-main" id="snapBtn"></button>
+    </div>
 </div>
 
-<div class="controls">
-    <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Chụp ảnh để TITI giải giúp bạn</p>
-    <button class="btn-capture" id="captureBtn"></button>
+<div id="crop-section" style="display:none;">
+    <div id="cropper-container">
+        <img id="image-to-crop">
+    </div>
+    <div class="controls">
+        <p style="color: #666; font-size: 13px;">Chọn vùng chứa câu hỏi cần giải</p>
+        <div style="display: flex; gap: 20px;">
+            <button onclick="location.reload()" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #ccc;">Chụp lại</button>
+            <button id="confirmCropBtn" style="padding: 10px 20px; border-radius: 10px; background: #2ecc71; color: #fff; border: none; font-weight: bold;">Xác nhận & Giải bài</button>
+        </div>
+    </div>
 </div>
 
-<div class="loader" id="loader">
-    <p>TITI đang giải bài...</p>
-</div>
-
+<div class="loader" id="loader"><p>TITI đang giải bài...</p></div>
 <div id="result-area">
-    <button onclick="location.reload()" style="float: right; padding: 10px; background: #eee; border: none; border-radius: 5px;">Đóng X</button>
-    <h2 style="color: #4A90E2;">Lời giải chi tiết:</h2>
-    <div id="ai-solution" style="line-height: 1.6; font-size: 17px; padding-bottom: 50px;"></div>
+    <button onclick="location.reload()" style="float: right; padding: 8px; background: #eee; border: none; border-radius: 5px;">Đóng X</button>
+    <h3 style="color: #4A90E2;">Lời giải chi tiết:</h3>
+    <div id="ai-solution"></div>
 </div>
 
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
     const video = document.getElementById('video');
-    const captureBtn = document.getElementById('captureBtn');
-    const loader = document.getElementById('loader');
-    const resultArea = document.getElementById('result-area');
-    const solutionDiv = document.getElementById('ai-solution');
+    const imageToCrop = document.getElementById('image-to-crop');
+    const cameraSection = document.getElementById('camera-section');
+    const cropSection = document.getElementById('crop-section');
+    let cropper;
 
-    // Khởi động Camera với cơ chế Retry
+    // 1. Khởi động Camera
     async function initCamera() {
-        const constraints = {
-            video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
-        };
-
         try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+            });
             video.srcObject = stream;
-            
-            // Đảm bảo video thực sự phát
-            video.onloadedmetadata = () => {
-                video.play().catch(e => console.error("Play error:", e));
-            };
         } catch (err) {
-            console.error("Camera error:", err);
-            alert("Vui lòng cho phép quyền truy cập Camera và tải lại trang.");
+            alert("Không thể mở camera. Hãy kiểm tra quyền truy cập.");
         }
     }
 
-    captureBtn.onclick = async () => {
+    // 2. Chụp ảnh để chuẩn bị cắt
+    document.getElementById('snapBtn').onclick = () => {
         const canvas = document.getElementById('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         
-        const base64Image = canvas.toDataURL('image/jpeg', 0.8);
-        loader.style.display = 'flex';
+        imageToCrop.src = canvas.toDataURL('image/jpeg');
+        cameraSection.style.display = 'none';
+        cropSection.style.display = 'block';
+
+        // Khởi tạo thư viện cắt ảnh
+        cropper = new Cropper(imageToCrop, {
+            viewMode: 1,
+            autoCropArea: 0.8,
+            responsive: true,
+        });
+    };
+
+    // 3. Cắt và gửi cho AI Vision
+    document.getElementById('confirmCropBtn').onclick = async () => {
+        const croppedCanvas = cropper.getCroppedCanvas({ maxWidth: 1024, maxHeight: 1024 });
+        const base64Image = croppedCanvas.toDataURL('image/jpeg', 0.8);
+        
+        document.getElementById('loader').style.display = 'flex';
 
         try {
             const res = await fetch('/api/solve', {
@@ -115,18 +125,16 @@
             });
             const data = await res.json();
             
-            solutionDiv.innerHTML = data.solution.replace(/\n/g, '<br>');
-            resultArea.style.display = 'block';
-            
+            document.getElementById('ai-solution').innerHTML = data.solution.replace(/\n/g, '<br>');
+            document.getElementById('result-area').style.display = 'block';
             if (window.MathJax) MathJax.typesetPromise();
         } catch (e) {
             alert("Lỗi kết nối API.");
         } finally {
-            loader.style.display = 'none';
+            document.getElementById('loader').style.display = 'none';
         }
     };
 
-    // Gọi khởi động camera
     initCamera();
 </script>
 </body>
