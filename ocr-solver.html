@@ -3,67 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITI AI Vision - Giải Bài Tập</title>
+    <title>TITI AI Vision - Giải Toán Thông Minh</title>
+    
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
 
-<script>
-  window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
-  };
-</script>
     <style>
-        body { margin: 0; background: #000; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        :root { --primary: #4A90E2; --success: #2ecc71; }
+        body { margin: 0; background: #000; font-family: 'Segoe UI', Arial, sans-serif; height: 100vh; overflow: hidden; }
+        
+        /* Camera UI */
         #camera-container { position: relative; width: 100%; height: 75vh; }
         video { width: 100%; height: 100%; object-fit: cover; }
         .scan-overlay {
-            position: absolute; top: 15%; left: 5%; width: 90%; height: 50%;
-            border: 2px solid #00ff00; border-radius: 15px;
+            position: absolute; top: 15%; left: 5%; width: 90%; height: 45%;
+            border: 2px solid var(--success); border-radius: 15px;
             box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); pointer-events: none;
         }
+        .scan-line {
+            position: absolute; width: 100%; height: 2px; background: var(--success);
+            box-shadow: 0 0 15px var(--success); animation: scan 2s linear infinite;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* Controls */
         .controls {
             position: fixed; bottom: 0; width: 100%; height: 25vh;
             background: #fff; border-radius: 25px 25px 0 0;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000;
         }
         .btn-capture {
-            width: 80px; height: 80px; border-radius: 50%; border: 6px solid #e0e0e0;
-            background: #4A90E2; cursor: pointer; transition: 0.2s;
+            width: 75px; height: 75px; border-radius: 50%; border: 5px solid #eee;
+            background: var(--primary); cursor: pointer; transition: 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         .btn-capture:active { transform: scale(0.9); }
+
+        /* Result Area */
         #result-area {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; display: none; z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box;
+            background: #fff; display: none; z-index: 2000; 
+            overflow-y: auto; padding: 20px; box-sizing: border-box;
         }
+        .close-btn { 
+            position: sticky; top: 0; float: right; padding: 8px 15px; 
+            background: #f1f1f1; border: none; border-radius: 8px; cursor: pointer; 
+        }
+        
+        /* Loading Overlay */
         .loading-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: #fff; z-index: 3000;
+            background: rgba(0,0,0,0.85); color: #fff; z-index: 3000;
             flex-direction: column; align-items: center; justify-content: center;
         }
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary);
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="camera-container">
     <video id="video" autoplay playsinline></video>
-    <div class="scan-overlay"></div>
+    <div class="scan-overlay"><div class="scan-line"></div></div>
 </div>
 
 <div class="controls">
-    <p style="color: #666; font-size: 14px;">Chụp ảnh bài tập để TITI giải giúp bạn</p>
+    <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Căn chỉnh bài tập và nhấn nút chụp</p>
     <button class="btn-capture" onclick="captureAndSolve()"></button>
 </div>
 
 <div class="loading-overlay" id="loader">
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-    <p>TITI đang giải bài...</p>
+    <div class="spinner"></div>
+    <p style="margin-top: 15px;">TITI đang phân tích và giải bài...</p>
 </div>
 
 <div id="result-area">
-    <button onclick="closeResult()" style="position: sticky; top: 0; float: right; padding: 10px; background: #eee; border: none; border-radius: 5px;">Đóng X</button>
-    <h2 style="color: #4A90E2;">Lời giải từ TITI AI:</h2>
-    <hr>
-    <div id="ai-solution" style="line-height: 1.6; font-size: 17px; padding-bottom: 50px;"></div>
+    <button class="close-btn" onclick="closeResult()">Đóng X</button>
+    <h2 style="color: var(--primary); margin-top: 0;">Lời giải chi tiết:</h2>
+    <hr style="border: 0; border-top: 1px solid #eee;">
+    <div id="ai-solution" style="line-height: 1.8; font-size: 16px; color: #333;"></div>
 </div>
 
 <canvas id="canvas" style="display:none;"></canvas>
@@ -74,17 +101,26 @@
     const resultArea = document.getElementById('result-area');
     const solutionDiv = document.getElementById('ai-solution');
 
+    // Khởi động Camera
     async function startCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } 
+            });
+            video.srcObject = stream;
+        } catch (err) {
+            alert("Lỗi camera: " + err + ". Hãy kiểm tra quyền truy cập!");
+        }
     }
 
+    // Chụp và gửi ảnh sang Gemini Vision
     async function captureAndSolve() {
         const canvas = document.getElementById('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         
+        // Nén ảnh jpeg để gửi nhanh hơn
         const base64Image = canvas.toDataURL('image/jpeg', 0.8);
         loader.style.display = 'flex';
 
@@ -95,23 +131,33 @@
                 body: JSON.stringify({ image: base64Image })
             });
             const data = await res.json();
-            solutionDiv.innerHTML = data.solution.replace(/\n/g, '<br>');
-    
-    // 2. Lệnh cho MathJax quét lại trang để hiển thị công thức đẹp
-    if (window.MathJax) {
-        MathJax.typesetPromise();
-            resultArea.style.display = 'block';
+            
+            if (data.solution) {
+                // Hiển thị lời giải và xử lý xuống dòng
+                solutionDiv.innerHTML = data.solution.replace(/\n/g, '<br>');
+                resultArea.style.display = 'block';
+                
+                // Kích hoạt MathJax để vẽ công thức đẹp
+                if (window.MathJax) {
+                    MathJax.typesetPromise();
+                }
+            } else {
+                alert("AI không phản hồi. Hãy thử lại!");
+            }
         } catch (e) {
-            alert("Lỗi kết nối. Hãy kiểm tra API Key!");
+            alert("Lỗi kết nối Serverless Function. Kiểm tra API Key trên Vercel!");
         } finally {
             loader.style.display = 'none';
         }
     }
 
-    function closeResult() { resultArea.style.display = 'none'; }
+    function closeResult() { 
+        resultArea.style.display = 'none'; 
+        solutionDiv.innerHTML = "";
+    }
+
     startCamera();
 </script>
 
-<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 </body>
 </html>
