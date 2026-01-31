@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const { text } = req.body;
     const API_KEY = process.env.GEMINI_API_KEY; // Lấy từ cài đặt Vercel
 
-    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
 
     try {
         const response = await fetch(GEMINI_URL, {
@@ -28,4 +28,5 @@ export default async function handler(req, res) {
     } catch (error) {
         res.status(500).json({ error: "Lỗi kết nối AI" });
     }
+
 }
